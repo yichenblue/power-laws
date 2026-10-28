@@ -35,7 +35,7 @@ Deploy standalone article 工作流。页面已设置独立地址的 canonical �
 - 页面结构：source/template.html.erb
 - 独立页面基础样式：dist/assets/css/standalone.css
 - 文章配图：dist/assets/images/
-- 目录、论文链接预览、主题切换：dist/assets/js/
+- 目录、论文链接预览、系统主题适配：dist/assets/js/
 
 正文保留了原 Markdown 的 front matter，未使用的博客字段不会参与构建。
 资源路径已转换为本地相对路径。不要改变公式原有分隔符。
@@ -49,7 +49,8 @@ Deploy standalone article 工作流。页面已设置独立地址的 canonical �
 ## 保留功能
 
 中英文切换、响应式目录与当前章节提示、折叠推导、数学公式、
-论文链接悬停与复制、深浅主题、原始 GIF 与减少动画偏好下的静态替代图。
+论文链接悬停与复制、随系统自动切换的深浅主题、原始 GIF 与减少动画偏好下的静态替代图。
+页面不提供手动主题按钮，也不会读取之前保存的手动主题偏好。
 字体和 MathJax 3.2.2 已随页面打包；论文引用和代码仓库依然是正常的外部链接。
 
 ## 来源与许可
