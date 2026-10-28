@@ -1,0 +1,13 @@
+{
+  "source_commit": "4879888ca5f033628b6ac5449df17a03fab31da0",
+  "articles": {
+    "en": {
+      "original_file": "2026-09-28-power-laws-have-a-clock.md",
+      "sha256": "ef2654ef60a8d0d5e00d0f26e17f5905d7a7ac0940e3088f1146c8fedb45d02a"
+    },
+    "zh": {
+      "original_file": "2026-09-28-when-do-learning-curves-follow-power-laws-zh.md",
+      "sha256": "9d28d06ebd2d2bb0086fae54a987b2351ed841278997905e2ee17fcb1c032a99"
+    }
+  }
+}
