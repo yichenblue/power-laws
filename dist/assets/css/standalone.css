@@ -33,6 +33,10 @@ summary { cursor: pointer; }
 .skip-link { position: fixed; top: 8px; left: 12px; transform: translateY(-150%); z-index: 20000; padding: 10px 14px; background: var(--research-paper); }
 .skip-link:focus { transform: none; }
 .research-article .reading-layout .reading-guide { top: 56px; max-height: calc(100vh - 88px); }
+.research-article .reading-layout .reading-guide__part { margin-top: 10px; color: var(--research-heading); font-weight: 600; }
+.research-article .reading-layout .reading-guide ul.reading-guide__subsections { margin-left: 10px; }
+.research-article .reading-layout .reading-guide__subsections a { padding-block: 6px; }
+.research-article .page__content h2 + h3 { margin-top: 1.2em; }
 .research-article .reading-layout #article-start,
 .research-article .page__content :is(h2,h3,h4) { scroll-margin-top: 30px; }
 html[lang="zh-CN"] .page__content { font-family: "Research Serif", "Songti SC", "Noto Serif CJK SC", "SimSun", serif; }

@@ -18,7 +18,7 @@
   <link rel="preload" href="./assets/fonts/research/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./assets/css/reading-guide.css">
   <link rel="stylesheet" href="./assets/css/research-article.css">
-  <link rel="stylesheet" href="./assets/css/standalone.css">
+  <link rel="stylesheet" href="./assets/css/standalone.css?v=20261030-headings">
   <script src="./assets/js/reading-guide.js" defer></script>
   <script src="./assets/js/research-article.js" defer></script>
   <script src="./assets/vendor/mathjax/es5/tex-mml-chtml.js" defer></script>
@@ -39,21 +39,53 @@
               <ul>
                 <li><a href="#article-start">概览</a></li>
                 
-                <li><a href="#why-sgd-has-memory">SGD 会留下记忆</a></li>
+                <li>
+                  <a href="#where-power-law-decay-comes-from" class="reading-guide__part">1. 幂律衰减的来源</a>
+
+                  <ul class="reading-guide__subsections">
+
+                    <li><a href="#why-sgd-has-memory">SGD 噪声如何影响后续 loss</a></li>
+
+                    <li><a href="#different-directions-learn-at-different-speeds">曲率决定各方向的误差衰减速度</a></li>
+
+                    <li><a href="#when-do-these-learning-speeds-produce-a-power-law">指数衰减如何叠加成幂律</a></li>
+
+                  </ul>
+
+                </li>
                 
-                <li><a href="#different-directions-learn-at-different-speeds">不同方向的学习速度不同</a></li>
+                <li>
+                  <a href="#how-data-and-schedules-change-loss" class="reading-guide__part">2. 数据和训练 schedule 如何改变 loss</a>
+
+                  <ul class="reading-guide__subsections">
+
+                    <li><a href="#three-kinds-of-memory">噪声影响的衰减与累积</a></li>
+
+                    <li><a href="#how-training-schedules-transform-the-response">Learning rate 与 batch size 如何改变 loss</a></li>
+
+                  </ul>
+
+                </li>
                 
-                <li><a href="#when-do-these-learning-speeds-produce-a-power-law">幂律何时出现</a></li>
+                <li>
+                  <a href="#from-theory-to-llm-pretraining" class="reading-guide__part">3. LLM 训练中的实验检验</a>
+
+                  <ul class="reading-guide__subsections">
+
+                    <li><a href="#two-implementations-of-the-same-ratio-path">降低 learning rate 与增大 batch size 的对比</a></li>
+
+                    <li><a href="#fit-one-schedule-and-predict-another">拟合 8-1-1，预测 WSD</a></li>
+
+                    <li><a href="#why-does-the-memory-exponent-keep-landing-near-one">拟合出的 memory exponent 接近 1</a></li>
+
+                  </ul>
+
+                </li>
                 
-                <li><a href="#three-kinds-of-memory">三类记忆</a></li>
-                
-                <li><a href="#how-training-schedules-transform-the-response">训练 schedule 如何改变 loss</a></li>
-                
-                <li><a href="#from-theory-to-llm-pretraining">在 LLM 中检验理论</a></li>
-                
-                <li><a href="#why-does-the-memory-exponent-keep-landing-near-one">为什么拟合出的 memory exponent 接近 1</a></li>
-                
-                <li><a href="#further-reading">延伸阅读</a></li>
+                <li>
+                  <a href="#further-reading">延伸阅读</a>
+
+                </li>
                 
               </ul>
             </nav>
@@ -63,18 +95,12 @@
 
 <p class="research-lead">我们（部分地）给出了幂律 scaling law 成立的充要条件，指出 intrinsic time 以及 batch size 与 learning rate 的比值可以调控这些规律，并在 300M nano-GPT 的训练中成功预测了 loss 曲线。这也展示了一个简单模型如何为 LLM 预训练提供思路。</p>
 
-<figure id="fit-and-predict-preview" class="research-result-pair">
-  <div class="research-result-pair__panels">
-    <a class="research-result-pair__panel" href="./assets/images/llm-global-811-fit.png" aria-label="放大 8-1-1 拟合图">
-      <span class="research-result-pair__title">拟合 8-1-1</span>
-      <img src="./assets/images/llm-global-811-fit.png" alt="300M nanoGPT 在 8-1-1 schedule 下的 validation loss 与拟合的响应模型；插图放大了训练后期的 loss 下降。" width="1584" height="1072" decoding="async" />
-    </a>
-    <a class="research-result-pair__panel" href="./assets/images/llm-global-wsd-prediction.png" aria-label="放大 WSD 预测图">
-      <span class="research-result-pair__title">不重新拟合，预测 WSD</span>
-      <img src="./assets/images/llm-global-wsd-prediction.png" alt="300M nanoGPT 在 WSD schedule 下的 validation loss，以及固定 8-1-1 拟合参数后得到的预测；插图放大了从共同 checkpoint 分叉后的轨迹。" width="1609" height="1072" decoding="async" />
-    </a>
-  </div>
-  <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是我们在 300M nanoGPT 实验中得到的 validation loss，使用本文的 joint-schedule surrogate，并沿用 <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li et al. (2025)</a> 先拟合、再跨 schedule 预测的检验流程。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
+<figure id="training-clock-animation" style="display:block;">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="./assets/images/main-fig1-clock-animation-still.png" />
+    <img src="./assets/images/main-fig1-clock-animation.gif" alt="匹配的 learning rate 与 batch size schedule 的 validation loss 轨迹从按 optimizer step 展示切换为按 intrinsic time 展示，随后呈现 8-1-1 拟合、固定所有参数后的 WSD 预测，以及展开为三层的视图。" width="1100" height="740" loading="eager" fetchpriority="high" decoding="async" style="display:block;width:100%;height:auto;margin:0;" />
+  </picture>
+  <figcaption><strong>不同的训练实现，同一条 intrinsic-time 曲线。</strong> 图中是我们在 300M nanoGPT 实验中得到的 validation loss。同一种 schedule 通过调整 learning rate 或 batch size 实现时，曲线在 optimizer step 下相互分离，换成 intrinsic time \(T=\sum_t\eta_t\) 后近乎重合，其中 \(\eta_t\) 是 learning rate。动画随后画出 8-1-1 拟合与固定所有参数后的 WSD 预测，再将 surrogate、learning-rate schedule 和 batch-size schedule 展开为三层。我们使用本文的 joint-schedule surrogate，并沿用 <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li et al. (2025)</a> 先拟合、再跨 schedule 预测的检验流程。</figcaption>
 </figure>
 
 <p>Scaling law 描述了语言模型的 loss 如何随模型规模、训练数据量和计算量变化。在许多实验中，这些关系可以用幂律近似描述。借助这些规律，我们可以估计扩大训练规模能带来多少收益，并在有限的计算预算下决定模型该做多大、该训练多少 token。</p>
@@ -168,7 +194,9 @@
 
 <p>这些例子把几个问题连在了一起：loss 何时呈幂律下降，幂律为什么会出现（<a href="https://arxiv.org/abs/2606.25008">Liu and Gore (2026)</a>），以及数据与任务结构和训练 schedule 如何共同影响它的指数（<a href="https://arxiv.org/abs/2210.16859">Maloney et al. (2022)</a>）。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。</p>
 
-<h2 id="why-sgd-has-memory">SGD 会留下记忆</h2>
+<h2 id="where-power-law-decay-comes-from">1. 幂律衰减的来源</h2>
+
+<h3 id="why-sgd-has-memory">SGD 噪声如何影响后续 loss</h3>
 
 <p>SGD 用 minibatch 估计梯度。与使用全梯度相比，采样误差会给参数带来随机扰动；后续更新从这些改变后的参数继续，因此，一次扰动对 loss 的影响可能持续多步。</p>
 
@@ -195,7 +223,7 @@
 <p>第一项对应从相同初始化出发、采用相同 learning-rate schedule 的全梯度更新；求和项汇总了 minibatch noise 的影响。这是 <strong>forcing–memory 分解</strong>的起点。</p>
 
 <details>
-  <summary><strong>推导细节：从 SGD 更新到 memory response</strong></summary>
+  <summary><strong>推导：SGD 噪声如何影响后续 loss</strong></summary>
 
   <p>固定更新步数 \(n\)、初始化 \(\theta_0\) 和确定性的 schedule \((\eta_t,B_t)\)。令 \(\theta_t\in\mathbb R^p\) 为第 \(t\) 次更新前的参数。每次更新都使用从同一数据分布中新采样的独立同分布样本。假设下述展开所需的光滑性条件和矩界成立。</p>
 
@@ -345,7 +373,7 @@ R_t
 <p>第一行区分误差的来源：是初始误差及其采样效应，还是 label noise 及其后续效应。第二行则将 forcing 项与累积的历史影响分开。尤其是，\(\sum_{s&lt;t}K_{t,s}B_s\) 在第一行中属于 bias，在第二行中却属于 memory 项。使用干净标签会令 \(V_t=0\)，但不会消除这部分 memory 项。这两种分解只是对同一组效应作了不同的归类；memory 项并不等同于 label-noise variance。</p>
 
 <details>
-  <summary><strong>推导细节：从 Volterra 方程得到 bias–variance 分解</strong></summary>
+  <summary><strong>推导：bias–variance 与 forcing–memory 的关系</strong></summary>
 
   <p>沿用正文中的 Gaussian random feature model、可实现目标和 label noise 假设，固定特征、输入分布以及预先给定的 learning-rate 和 batch-size schedule。这里的 \(K_{t,s}\) 不依赖初始误差或 label noise 方差，因此下面两个过程使用相同的 kernel。</p>
 
@@ -372,7 +400,7 @@ R_t
 
 <p>这些分解说明了 loss 中包含哪些效应，却还没有解释它们如何随时间衰减。要理解幂律从何而来，我们需要进一步看各个方向上的误差以多快的速度消退。</p>
 
-<h2 id="different-directions-learn-at-different-speeds">不同方向的学习速度不同</h2>
+<h3 id="different-directions-learn-at-different-speeds">曲率决定各方向的误差衰减速度</h3>
 
 <p>沿用前面的模型 \(f_a(x)=a^\top\phi(x)\)，其中 \(\phi\) 为固定特征，\(a\) 为可训练权重。我们可以显式计算各方向上的误差消退速度，<a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html">Paquette et al. (2024)</a> 对计算最优缩放的分析就采用了这一思路。</p>
 
@@ -399,7 +427,7 @@ T_t=\sum_{s&lt;t}\eta_s.\]
 <p>loss 是各个方向上平方误差的加权和。如果某个方向上的初始误差几乎为零，即使这个方向学得很慢，它对 loss 的贡献也很小。学习速度和对 loss 的重要性，是两回事。</p>
 
 <details>
-  <summary><strong>推导细节：从 squared loss 到学习时间</strong></summary>
+  <summary><strong>推导：曲率如何决定误差衰减速度</strong></summary>
 
   <p><strong>1. 从 squared loss 到梯度。</strong>设 \(\phi(x)\) 是输入 \(x\) 的固定特征向量，\(y\) 是其目标，\(a\) 是可训练权重。定义 population squared loss 及其 Hessian 矩阵：</p>
 
@@ -465,7 +493,7 @@ t_{\mathrm{learn},j}\asymp\frac1{\eta\lambda_j}.\]
 
 </details>
 
-<h2 id="when-do-these-learning-speeds-produce-a-power-law">这些学习速度何时会产生幂律？</h2>
+<h3 id="when-do-these-learning-speeds-produce-a-power-law">指数衰减如何叠加成幂律</h3>
 
 <p>在恒定且稳定的 schedule 下，各方向的贡献近似按 \(e^{-2\lambda T}\) 衰减。到时刻 \(T\)，大特征值方向的贡献已大幅减弱，因此剩余响应主要取决于特征值在 \(1/T\) 附近及以下的累计权重。</p>
 
@@ -517,7 +545,9 @@ F_{W,&gt;0}(T)\propto T^{-q_{\mathcal F}},\\
 
 <p>上述充要关系分别适用于 forcing 和单次 memory response，并不直接给出总 loss 的指数。要得到整条 SGD loss 曲线，还需要把历次噪声注入的影响累积起来。</p>
 
-<h2 id="three-kinds-of-memory">三类记忆</h2>
+<h2 id="how-data-and-schedules-change-loss">2. 数据和训练 schedule 如何改变 loss</h2>
+
+<h3 id="three-kinds-of-memory">噪声影响的衰减与累积</h3>
 
 <p>以 intrinsic time 计，用 \(k(v)\) 表示经过延迟 \(v\) 后的归一化 memory response：对于作为参照的恒定 schedule，\(k(T)=(B/\eta^2)K_W(T)\)。噪声注入强度单独给出。为了只看响应本身，先考虑每单位 intrinsic time 都注入相同强度噪声的参考情形。若 \(k(v)\asymp(1+v)^{-q_{\mathcal K}}\)，到 \(T\) 时刻各次注入留下的影响相加，量级为</p>
 
@@ -568,7 +598,7 @@ q_{\mathcal K}=2-\frac{1}{2\alpha}.\]
 
 <p>到这里，我们区分了噪声影响如何消退和累积。实际训练还会改变每次注入的强度，而这正是 learning rate 和 batch size schedule 可以控制的部分。</p>
 
-<h2 id="how-training-schedules-transform-the-response">训练 schedule 如何改变响应</h2>
+<h3 id="how-training-schedules-transform-the-response">Learning rate 与 batch size 如何改变 loss</h3>
 
 <p>改变噪声注入的强度，可以直接改变 loss 曲线的形状。一个熟悉的例子是 learning-rate decay：learning rate 开始下降后，loss 反而可能下降得更快。在 warmup–stable–decay（WSD）训练（<a href="https://arxiv.org/abs/2404.06395">Hu et al. (2024)</a>）中，learning rate 在 warmup 后保持不变，直到最后的衰减阶段。观察下面 MiniCPM 实验中的灰绿色曲线：衰减一开始，原先平缓的下降就变成了陡降。同样的现象出现在多个不同的训练阶段。</p>
 
@@ -632,29 +662,21 @@ F(T)+
 
 <p>固定 \(q_0\)，沿水平方向向右移动，也就是增大 \(\vartheta\)。如果 \(q_0&lt;q_{\mathcal K}\)，我们最终会从<strong>改变</strong>区域进入<strong>保持</strong>区域：此时额外 loss 的衰减速度至少与 clean-label SGD 的 excess loss 一样快。如果 \(q_0&gt;q_{\mathcal K}\)，无论向右移动多远，这条水平线始终在 memory ceiling 之上。额外 loss 的衰减指数以 \(q_{\mathcal K}\) 为上限，因此更激进地抑制噪声，也无法恢复 clean-label SGD 的指数。</p>
 
-<h2 id="from-theory-to-llm-pretraining">从理论走向 LLM 预训练</h2>
+<h2 id="from-theory-to-llm-pretraining">3. LLM 训练中的实验检验</h2>
 
 <p>前面的分析将 schedule 的作用分成了两部分：intrinsic time 记录学习过程推进了多少，\(r(T)\) 控制沿途的噪声注入。对于表示不断变化的 LLM，这两个量是否仍然有用？我们先比较同一条比值路径的不同实现，再检验改变这条路径后，能否预测新的 loss 曲线。</p>
 
-<h3 id="two-implementations-of-the-same-ratio-path">同一条比值路径的两种实现</h3>
+<h3 id="two-implementations-of-the-same-ratio-path">降低 learning rate 与增大 batch size 的对比</h3>
 
 <p>先保持比值路径相同，但用不同方式实现它：一次运行固定 batch size、降低 learning rate，另一次运行固定 learning rate、增大 batch size。将两者的时钟和比值路径匹配起来。</p>
 
 <p>我们用普通 SGD，在 6.5B 个 OpenWebText token 上训练了一个 300M 的 LLM，进行了这一比较。所有运行共享前 80% 的 token 预算，然后从同一个 checkpoint 分支，使用剩下的 20%。在固定 batch size 的运行中，WSD 在最后这段训练中逐渐降低 learning rate，而 8-1-1 则分为两个 learning rate 更低的阶段，每个阶段占 10%。如果 intrinsic time 和比值路径捕捉到了 schedule 的主要影响，那么每组 learning rate／batch size 配对的运行都应沿着近乎相同的 loss 曲线前进。</p>
 
-<figure id="training-clock-animation" style="display:block;">
-  <picture>
-    <source media="(prefers-reduced-motion: reduce)" srcset="./assets/images/main-fig1-clock-animation-still.png" />
-    <img src="./assets/images/main-fig1-clock-animation.gif" alt="匹配的 learning rate 与 batch size schedule 的 validation loss 轨迹从按 optimizer step 展示切换为按 intrinsic time 展示，随后呈现 8-1-1 拟合、固定所有参数后的 WSD 预测，以及展开为三层的分解。" width="1100" height="740" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;margin:0;" />
-  </picture>
-  <figcaption><strong>步数不同，intrinsic time 下的曲线却近乎相同。</strong> 动画将横轴从 optimizer step 切换为 \(T=\sum_t\eta_t\)，画出 8-1-1 拟合以及固定所有参数后的 WSD 预测，再将曲线展开为三层。这里，\(q_{\mathcal K}\) 自由参与拟合；下一节会将它固定为 1。</figcaption>
-</figure>
-
-<p>先看蓝色的两条 WSD 曲线：以 optimizer step 为横轴时，它们相互分离；换成 intrinsic time 后，它们便近乎重合。橙色的两条 8-1-1 曲线也出现了同样的变化。两种实现处理相同数据所需的更新次数不同，因此直接比较 step 会错开它们的训练进程。</p>
+<p>回看<a href="#training-clock-animation">开头的动图</a>，先看蓝色的两条 WSD 曲线：以 optimizer step 为横轴时，它们相互分离；换成 intrinsic time 后，它们便近乎重合。橙色的两条 8-1-1 曲线也出现了同样的变化。两种实现处理相同数据所需的更新次数不同，因此直接比较 step 会错开它们的训练进程。</p>
 
 <p>蓝色与橙色并没有合成同一条曲线，因为 WSD 与 8-1-1 采用了不同的 \(r(T)\) 路径。这个比较说明，在这些运行中，同一条路径可以通过改变 learning rate 或 batch size 来实现，并产生非常相近的 loss 响应。</p>
 
-<h3 id="fit-one-schedule-and-predict-another">拟合一种 schedule，预测另一种</h3>
+<h3 id="fit-one-schedule-and-predict-another">拟合 8-1-1，预测 WSD</h3>
 
 <p>相同路径的不同实现可以对齐，接下来要解释的是不同路径之间的差异：从 8-1-1 的两次 learning-rate 降档中拟合出的响应，能否预测 WSD 逐渐衰减 learning rate 时的 loss？</p>
 
@@ -677,7 +699,7 @@ F(T)+
 
 <p>这些分量由 loss 曲线拟合得到；baseline 并不是单独测出的无噪声轨迹，噪声源幅度 \(A_0,A_1\) 也不由 \(L_\infty,A_{\mathcal F}\) 固定。</p>
 
-<p>这里取 \(q_{\mathcal K}=1\) 作为简化，因为后文展示的自由拟合在不同数据集和模型大小下，都给出了接近 1 的 memory exponent。我们用固定 batch size 的 8-1-1 运行所测得的 validation loss 拟合其余六个参数，随后固定所有参数，仅将比值路径替换为 WSD 的路径。拟合过程中没有使用 WSD 分叉后的 loss。</p>
+<p>开头动图中的 \(q_{\mathcal K}\) 自由参与拟合。下面的比较取 \(q_{\mathcal K}=1\) 作为简化，因为后文展示的自由拟合在不同数据集和模型大小下，都给出了接近 1 的 memory exponent。我们用固定 batch size 的 8-1-1 运行所测得的 validation loss 拟合其余六个参数，随后固定所有参数，仅将比值路径替换为 WSD 的路径。拟合过程中没有使用 WSD 分叉后的 loss。</p>
 
 <p>下面左图中，surrogate 拟合了 8-1-1 的两次阶梯式下降。换入 WSD 的比值路径后，中图的预测就变成了逐渐加快下降的曲线，并跟随了实测 loss。点线之前，两次运行共享同一段训练历史；真正检验跨 schedule 预测的是点线之后的 WSD 尾段。</p>
 
@@ -697,7 +719,7 @@ F(T)+
 <p class="research-takeaway" id="prediction-takeaway">一个学习曲线模型，应当通过预测训练发生变化后的结果来赢得我们的信任。</p>
 
 <details>
-  <summary><strong>实验与 surrogate 细节</strong></summary>
+  <summary><strong>实验设置与 surrogate 拟合细节</strong></summary>
 
   <p><strong>训练与匹配。</strong>初步的 30M 实验从一个已充分训练的普通 SGD checkpoint 出发，沿十一条比值路径继续训练，全部在相同的 intrinsic time 结束。在 300M 比较中，每组 learning rate／batch size 配对的运行都以若干次更新为一组，匹配数据量、intrinsic time 增量和 \(B/\eta\)。</p>
 
@@ -709,7 +731,7 @@ F(T)+
 
 </details>
 
-<h2 id="why-does-the-memory-exponent-keep-landing-near-one">为什么拟合出的 memory exponent 接近 1？</h2>
+<h3 id="why-does-the-memory-exponent-keep-landing-near-one">拟合出的 memory exponent 接近 1</h3>
 
 <p>上一节比较了不同 memory exponent 下的 WSD 预测表现。这里换一种检查方式：只使用 8-1-1 曲线，让全部七个参数自由参与拟合，不预先指定 \(q_{\mathcal K}\)。在不同数据集和模型大小下，拟合得到的值仍然接近 1：</p>
 

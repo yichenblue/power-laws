@@ -2,7 +2,7 @@
 
 这是独立的静态网站，不依赖原 homepage、Jekyll、博客主题或在线 CDN。
 英文入口为 dist/index.html，中文入口为 dist/zh.html。
-正文、数学公式和配图来自 SOURCE.json 记录的版本；只修改资源路径和页面外壳。
+独立页面最初由 SOURCE.json 记录的版本移植，后续调整见 VERIFICATION.md。
 
 ## 直接预览与部署
 

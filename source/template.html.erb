@@ -18,7 +18,7 @@
   <link rel="preload" href="./assets/fonts/research/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./assets/css/reading-guide.css">
   <link rel="stylesheet" href="./assets/css/research-article.css">
-  <link rel="stylesheet" href="./assets/css/standalone.css">
+  <link rel="stylesheet" href="./assets/css/standalone.css?v=20261030-headings">
   <script src="./assets/js/reading-guide.js" defer></script>
   <script src="./assets/js/research-article.js" defer></script>
   <script src="./assets/vendor/mathjax/es5/tex-mml-chtml.js" defer></script>
@@ -39,7 +39,16 @@
               <ul>
                 <li><a href="#article-start"><%= overview %></a></li>
                 <% guide.fetch('sections').each do |section| %>
-                <li><a href="#<%= CGI.escapeHTML(section.fetch('id')) %>"><%= CGI.escapeHTML(section.fetch('title')) %></a></li>
+                <li>
+                  <a href="#<%= CGI.escapeHTML(section.fetch('id')) %>"<%= section.key?('subsections') ? ' class="reading-guide__part"' : '' %>><%= CGI.escapeHTML(section.fetch('title')) %></a>
+<% if section.key?('subsections') %>
+                  <ul class="reading-guide__subsections">
+<% section.fetch('subsections').each do |subsection| %>
+                    <li><a href="#<%= CGI.escapeHTML(subsection.fetch('id')) %>"><%= CGI.escapeHTML(subsection.fetch('title')) %></a></li>
+<% end %>
+                  </ul>
+<% end %>
+                </li>
                 <% end %>
               </ul>
             </nav>
